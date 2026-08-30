@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bilan frigorifique — Chambre froide</title>
+<style>
+  :root {
+    --bg: #10161c;
+    --panel: #161d24;
+    --panel-2: #1c242c;
+    --line: #2a343d;
+    --frost: #7fd4d9;
+    --frost-dim: #3d5c60;
+    --amber: #e0a458;
+    --text: #dfe6ea;
+    --text-dim: #8b9aa3;
+    --danger: #d9705f;
+    --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+    --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-attachment: fixed;
+    background-position: -1px -1px;
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.5;
+    padding: 40px 20px 80px;
+  }
+
+  .wrap { max-width: 920px; margin: 0 auto; }
+
+  header {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+    display: flex;
+    gap: 24px;
+    align-items: flex-end;
+  }
+
+  .logo-wrap {
+    flex-shrink: 0;
+    width: 120px;
+    height: 90px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+  }
+  .logo-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: grayscale(15%);
+  }
+
+  .header-text { flex: 1; min-width: 0; }
+
+  .credit {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    margin-top: 6px;
+  }
+  .credit span { color: var(--frost); }
+
+  @media (max-width: 560px) {
+    header { flex-direction: column; align-items: flex-start; }
+    .logo-wrap { width: 100px; height: 75px; }
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--frost);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 30px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+
+  header p {
+    color: var(--text-dim);
+    margin: 0;
+    max-width: 60ch;
+    font-size: 14.5px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--frost);
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .n {
+    background: var(--frost-dim);
+    color: var(--frost);
+    width: 20px; height: 20px;
+    border-radius: 3px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .field { margin-bottom: 16px; }
+
+  input, select {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 14px;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--frost);
+  }
+
+  .unit-field { position: relative; }
+  .unit-field .u {
+    position: absolute;
+    right: 12px; top: 50%; transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+
+  .hint { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media (max-width: 500px) { .row3 { grid-template-columns: 1fr; } }
+
+  .result-panel {
+    background: linear-gradient(180deg, #16323a 0%, var(--panel) 60%);
+    border: 1px solid var(--frost-dim);
+    border-radius: 4px;
+    padding: 26px 28px;
+    position: sticky;
+    top: 20px;
+  }
+
+  .result-big {
+    font-family: var(--mono);
+    font-size: 42px;
+    font-weight: 600;
+    color: var(--frost);
+    line-height: 1;
+    margin: 6px 0 4px;
+  }
+  .result-big .unit { font-size: 18px; color: var(--text-dim); margin-left: 6px; }
+
+  .result-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .breakdown {
+    margin-top: 20px;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  .bd-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 5px 0;
+    color: var(--text-dim);
+  }
+  .bd-row.total {
+    color: var(--text);
+    border-top: 1px solid var(--line);
+    margin-top: 6px;
+    padding-top: 10px;
+    font-weight: 600;
+  }
+  .bd-row .val { color: var(--text); }
+
+  .bar-track {
+    height: 6px;
+    background: var(--panel-2);
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex;
+    margin: 16px 0 4px;
+  }
+  .bar-seg { height: 100%; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 16px; font-size: 11px; color: var(--text-dim); font-family: var(--mono); margin-top: 8px;}
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+
+  .dt1-box {
+    margin-top: 22px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .dt1-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    color: var(--amber);
+  }
+  .warn {
+    font-size: 12.5px;
+    color: var(--amber);
+    background: rgba(224,164,88,0.08);
+    border: 1px solid rgba(224,164,88,0.3);
+    border-radius: 3px;
+    padding: 10px 12px;
+    margin-top: 14px;
+  }
+
+  footer {
+    margin-top: 40px;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: center;
+    font-family: var(--mono);
+  }
+
+  .toggle-group {
+    display: flex;
+    gap: 8px;
+  }
+  .toggle-btn {
+    flex: 1;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    padding: 9px 10px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .toggle-btn.active {
+    border-color: var(--frost);
+    color: var(--frost);
+    background: rgba(127,212,217,0.08);
+  }
+
+  .actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .action-btn {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    padding: 9px 16px;
+    border-radius: 3px;
+    border: 1px solid var(--frost-dim);
+    background: rgba(127,212,217,0.08);
+    color: var(--frost);
+    cursor: pointer;
+  }
+  .action-btn:hover { background: rgba(127,212,217,0.16); }
+  .action-btn.secondary {
+    border-color: var(--line);
+    background: transparent;
+    color: var(--text-dim);
+  }
+  .action-btn.secondary:hover { color: var(--text); border-color: var(--text-dim); }
+
+  .hist-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+  .hist-table th, .hist-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); color: var(--text-dim); }
+  .hist-table th { color: var(--frost); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; font-size: 10.5px; }
+  .hist-table td.current { color: var(--text); }
+  .hist-clear { margin-top: 10px; }
+
+  @media print {
+    body { background: #fff; color: #000; padding: 0; }
+    .actions-bar { display: none; }
+    .card, .result-panel { background: #fff; border: 1px solid #999; break-inside: avoid; }
+    .result-big, .dt1-value, .eyebrow, .card-title, .result-label { color: #000; }
+    .bd-row, .bd-row .val, .bd-row.total { color: #000; }
+    .hint, .metric-label { color: #333; }
+    input, select { background: #fff; color: #000; border: 1px solid #999; }
+    .toggle-btn.active { background: #eee; color: #000; border-color: #666; }
+    .bar-track { background: #eee; }
+    .warn { background: #fff; border-color: #999; color: #000; }
+    .logo-wrap img { filter: none; }
+    .grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo-wrap">
+      <img src="data:image/png;base64,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" alt="Logo">
+    </div>
+    <div class="header-text">
+      <div class="eyebrow">Bilan thermique · Chambre froide</div>
+      <h1>Calcul de puissance frigorifique</h1>
+      <p>Estimation de la charge thermique (parois, denrées, air, charges internes) et aide au choix du DT1. Rentrez vos paramètres, tout se recalcule en direct.</p>
+      <p class="credit">Créé par <span>Thomas</span> — A2PRO</p>
+    </div>
+  </header>
+
+  <div class="actions-bar">
+    <button type="button" class="action-btn" id="btnPrint">Imprimer / Exporter PDF</button>
+    <button type="button" class="action-btn" id="btnHistorique">+ Ajouter à l'historique</button>
+    <button type="button" class="action-btn" id="btnSave">Enregistrer</button>
+    <button type="button" class="action-btn secondary" id="btnReset">Réinitialiser</button>
+    <span class="hint" id="saveStatus"></span>
+  </div>
+
+  <div class="grid">
+    <div>
+
+      <div class="card">
+        <p class="card-title"><span class="n">1</span>Client & régime de fonctionnement</p>
+        <div class="field">
+          <label for="client">Client (pour l'historique)</label>
+          <input type="text" id="client" placeholder="ex: Boulangerie Martin">
+        </div>
+        <div class="field">
+          <label for="regime-toggle">Régime de la chambre</label>
+          <div class="toggle-group" id="regime-toggle">
+            <div class="toggle-btn active" data-val="R448A">Positif — R448A</div>
+            <div class="toggle-btn" data-val="R452A">Négatif — R452A</div>
+          </div>
+        </div>
+        <p class="hint">Détermine le fluide utilisé pour la buse, le temps de fonctionnement par défaut, et fait apparaître le calcul de congélation (chaleur latente) en régime négatif.</p>
+      </div>
+
+      <div class="card">
+        <p class="card-title"><span class="n">2</span>Dimensions & isolation</p>
+        <div class="row3">
+          <div class="field">
+            <label for="lg">Longueur</label>
+            <div class="unit-field"><input type="number" id="lg" value="4" step="0.1"><span class="u">m</span></div>
+          </div>
+          <div class="field">
+            <label for="lr">Largeur</label>
+            <div class="unit-field"><input type="number" id="lr" value="2.5" step="0.1"><span class="u">m</span></div>
+          </div>
+          <div class="field">
+            <label for="ht">Hauteur</label>
+            <div class="unit-field"><input type="number" id="ht" value="2" step="0.1"><span class="u">m</span></div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="kval">Coefficient K du panneau (isolation)</label>
+          <select id="kval">
+            <option value="0.5">Panneau 60mm PU — K ≈ 0.5</option>
+            <option value="0.4" selected>Panneau standard 80mm PU — K ≈ 0.4</option>
+            <option value="0.3">Panneau 100mm PU — K ≈ 0.3</option>
+            <option value="0.24">Panneau 120-150mm PU — K ≈ 0.24</option>
+            <option value="0.6">Isolation faible / vétuste — K ≈ 0.6</option>
+          </select>
+        </div>
+        <div class="row3">
+          <div class="field">
+            <label for="text">Température extérieure max</label>
+            <div class="unit-field"><input type="number" id="text" value="40" step="1"><span class="u">°C</span></div>
+          </div>
+          <div class="field">
+            <label for="tint">Température consigne chambre</label>
+            <div class="unit-field"><input type="number" id="tint" value="4" step="0.5"><span class="u">°C</span></div>
+          </div>
+          <div class="field">
+            <label for="dtCondEstime">Écart condenseur estimé (Tc − Text)</label>
+            <div class="unit-field"><input type="number" id="dtCondEstime" value="15" step="1"><span class="u">K</span></div>
+          </div>
+        </div>
+        <p class="hint">L'écart condenseur sert à estimer la Tc réelle (Text + cet écart) pour la sélection de la buse — 15K est une valeur médiane typique pour un condenseur à air correctement dimensionné, ajustable selon votre installation réelle.</p>
+      </div>
+
+      <div class="card">
+        <p class="card-title"><span class="n">3</span>Charge produit</p>
+        <div class="row3">
+          <div class="field">
+            <label for="masse">Masse entrante / jour</label>
+            <div class="unit-field"><input type="number" id="masse" value="300" step="1"><span class="u">kg</span></div>
+          </div>
+          <div class="field">
+            <label for="cp" id="cpLabel">Chaleur spécifique (cp)</label>
+            <div class="unit-field"><input type="number" id="cp" value="2.8" step="0.1"><span class="u">kJ/kg.K</span></div>
+          </div>
+          <div class="field">
+            <label for="temps">Temps de refroidissement</label>
+            <div class="unit-field"><input type="number" id="temps" value="4" step="0.5"><span class="u">h</span></div>
+          </div>
+        </div>
+        <div class="row3">
+          <div class="field">
+            <label for="tprod">Température d'entrée du produit</label>
+            <div class="unit-field"><input type="number" id="tprod" value="24" step="1"><span class="u">°C</span></div>
+          </div>
+        </div>
+        <p class="hint">cp indicatifs — pâte à pain ≈ 2.6-2.9 · viande ≈ 3.2 · légumes ≈ 3.9 · produits laitiers ≈ 3.8 kJ/kg.K</p>
+        <p class="hint">Temps de refroidissement par défaut : 4h en positif, 18h en négatif (la congélation avec chaleur latente est beaucoup plus longue qu'un simple refroidissement) — ajustable.</p>
+
+        <div id="congelationBlock" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--line);">
+          <p class="hint" style="margin-bottom:12px;">Régime négatif : le produit passe par un changement d'état (congélation). Le cp ci-dessus s'applique <strong>avant</strong> congélation.</p>
+          <div class="row3">
+            <div class="field">
+              <label for="tcong">Température de congélation</label>
+              <div class="unit-field"><input type="number" id="tcong" value="-1" step="0.5"><span class="u">°C</span></div>
+            </div>
+            <div class="field">
+              <label for="lf">Chaleur latente de congélation</label>
+              <div class="unit-field"><input type="number" id="lf" value="250" step="5"><span class="u">kJ/kg</span></div>
+            </div>
+            <div class="field">
+              <label for="cpApres">cp après congélation</label>
+              <div class="unit-field"><input type="number" id="cpApres" value="1.8" step="0.1"><span class="u">kJ/kg.K</span></div>
+            </div>
+          </div>
+          <p class="hint">Lf indicatif ≈ 230-330 kJ/kg selon teneur en eau (viande/légumes ≈ 250-280, pâte/produits gras un peu moins). cp après congélation généralement ≈ 50-65% du cp avant.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card-title"><span class="n">4</span>Renouvellement d'air / ouvertures</p>
+        <div class="field">
+          <label for="ouverture">Fréquence d'ouverture de la porte</label>
+          <div class="toggle-group" id="ouverture-toggle">
+            <div class="toggle-btn" data-val="5">Faible</div>
+            <div class="toggle-btn" data-val="10">Modérée</div>
+            <div class="toggle-btn active" data-val="17">Fréquente</div>
+            <div class="toggle-btn" data-val="25">Intensive</div>
+          </div>
+        </div>
+        <p class="hint">Estimation forfaitaire en W/m³ de volume utile, selon le nombre d'ouvertures et le trafic (usage boulangerie/commerce = fréquente à intensive).</p>
+      </div>
+
+      <div class="card">
+        <p class="card-title"><span class="n">5</span>Personnel présent</p>
+        <div class="row3">
+          <div class="field">
+            <label for="nbPersonnes">Nombre de personnes présentes</label>
+            <div class="unit-field"><input type="number" id="nbPersonnes" value="0" step="1"><span class="u">pers.</span></div>
+          </div>
+          <div class="field">
+            <label for="chaleurPersonne">Chaleur dégagée par personne</label>
+            <div class="unit-field"><input type="number" id="chaleurPersonne" value="270" step="10"><span class="u">W</span></div>
+          </div>
+        </div>
+        <p class="hint">Indicatif ≈ 270W/personne en positif, jusqu'à 350-400W/personne en négatif (effort accru par le froid). Mettre 0 si la présence est occasionnelle et brève.</p>
+      </div>
+
+      <div class="card">
+        <p class="card-title"><span class="n">6</span>Charges internes & sécurité</p>
+        <div class="row3">
+          <div class="field">
+            <label for="interne">Éclairage / moteurs ventilateurs</label>
+            <div class="unit-field"><input type="number" id="interne" value="125" step="5"><span class="u">W</span></div>
+          </div>
+          <div class="field">
+            <label for="marge">Marge de sécurité</label>
+            <div class="unit-field"><input type="number" id="marge" value="15" step="1"><span class="u">%</span></div>
+          </div>
+          <div class="field">
+            <label for="encrassement">Correction encrassement/givrage évaporateur (optionnel)</label>
+            <div class="unit-field"><input type="number" id="encrassement" value="0" step="1"><span class="u">%</span></div>
+          </div>
+        </div>
+        <p class="hint">Laisser à 0% dans la plupart des cas : la marge de sécurité ci-dessus couvre déjà les aléas courants. N'ajouter un % ici que pour un cas particulier documenté (encrassement rapide connu, environnement très poussiéreux) — cumuler plusieurs marges fait grimper le dimensionnement bien au-delà du nécessaire (facteur 1,5 à 2x observé en pratique) par rapport à ce qu'un fournisseur calcule.</p>
+      </div>
+
+      <div class="card">
+        <p class="card-title"><span class="n">7</span>Liaison frigorifique groupe ↔ évaporateur</p>
+        <div class="row3">
+          <div class="field">
+            <label for="longueur">Longueur de liaison</label>
+            <div class="unit-field"><input type="number" id="longueur" value="0" step="1"><span class="u">m</span></div>
+          </div>
+          <div class="field">
+            <label for="denivele">Dénivelé (aspiration)</label>
+            <div class="unit-field"><input type="number" id="denivele" value="0" step="0.5"><span class="u">m</span></div>
+          </div>
+        </div>
+        <p class="hint" id="liaisonHint">Sous 15m et sans dénivelé important, la perte de charge reste généralement négligeable si le diamètre de ligne est bien choisi.</p>
+      </div>
+
+    </div>
+
+    <div>
+      <div class="result-panel">
+        <div class="result-label">Puissance frigorifique (bilan)</div>
+        <div class="result-big"><span id="resultKw">—</span><span class="unit">kW</span></div>
+        <div class="hint" id="resultW"></div>
+
+        <div class="bar-track" id="barTrack"></div>
+        <div class="legend" id="legend"></div>
+
+        <div class="breakdown" id="breakdown"></div>
+
+        <div class="dt1-box">
+          <p class="card-title" style="margin-bottom:8px;">Temps de fonctionnement (optionnel)</p>
+          <p class="hint" id="regimeActifLabel">Régime actif : Positif — R448A</p>
+          <div class="field">
+            <label for="tempsFonctionnement">Temps de fonctionnement compresseur</label>
+            <div class="unit-field"><input type="number" id="tempsFonctionnement" value="24" step="0.5"><span class="u">h / 24h</span></div>
+          </div>
+          <p class="hint">Laisser à 24h/24h dans la grande majorité des cas : c'est la puissance frigorifique du bilan (avec sa marge) qui doit être donnée telle quelle à votre fournisseur pour choisir le groupe — c'est ce qu'utilisent leurs propres logiciels de sélection (Coolselector, etc.). Ne réduire ce temps que si vous avez une contrainte réelle et documentée de fonctionnement très limité (ex : très gros dégivrage imposé) — sinon vous cumulez deux marges différentes et sur-dimensionnez le groupe.</p>
+        </div>
+
+        <div class="dt1-box">
+          <div class="result-label">Puissance compresseur (corrigée)</div>
+          <div class="result-big"><span id="resultCompKw">—</span><span class="unit">kW</span></div>
+          <div class="hint" id="resultCompHint"></div>
+        </div>
+
+        <div class="dt1-box">
+          <p class="hint"><strong>À retenir :</strong> tant que le temps de fonctionnement reste à 24h et l'encrassement à 0%, puissance frigorifique et puissance compresseur sont identiques — c'est cette valeur unique qu'il faut transmettre au fournisseur pour l'évaporateur ET le groupe.</p>
+          <div class="warn">⚠ Ne comparez pas cette valeur directement au kW affiché sur la fiche technique d'un compresseur : ce chiffre catalogue est presque toujours donné à une température d'évaporation de référence froide (souvent Te=-10°C). À votre Te réelle (généralement plus chaude en positif), le même compresseur délivre nettement plus de puissance — un compresseur "affiché" plus petit peut donc être correctement dimensionné. Demandez au fournisseur la puissance réelle à votre Te/Tc, pas le kW nominal catalogue.</div>
+        </div>
+
+        <div class="dt1-box">
+          <p class="card-title" style="margin-bottom:8px;">DT1 recommandé</p>
+          <div class="field">
+            <label for="sensibilite">Sensibilité du produit au dessèchement</label>
+            <select id="sensibilite">
+              <option value="7">Élevée (pâte crue, produits non emballés) → DT1 ≈ 6-8K</option>
+              <option value="10">Standard (produits emballés, chambre mixte) → DT1 ≈ 8-10K</option>
+              <option value="12">Faible (surgelés, produits secs) → DT1 ≈ 10-12K</option>
+            </select>
+          </div>
+          <div class="dt1-value" id="dt1out">DT1 ≈ 7 K</div>
+          <div class="hint" id="tevapOut"></div>
+          <div class="warn" id="dt1warn"></div>
+        </div>
+
+        <div class="dt1-box">
+          <p class="card-title" style="margin-bottom:8px;">Buse — Danfoss T2/TE2</p>
+          <div class="dt1-value" id="buseOut">—</div>
+          <div class="hint" id="buseHint"></div>
+        </div>
+
+        <div class="dt1-box" id="historiqueBox" style="display:none;">
+          <p class="card-title" style="margin-bottom:12px;">Historique des bilans</p>
+          <div id="historiqueOutput"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Estimation à usage d'orientation — ne remplace pas un bilan détaillé validé par un frigoriste.
+  </footer>
+</div>
+
+<script>
+const ids = ['lg','lr','ht','kval','text','tint','dtCondEstime','masse','cp','temps','tprod','tcong','lf','cpApres','interne','marge','encrassement','nbPersonnes','chaleurPersonne','sensibilite','longueur','denivele','tempsFonctionnement','client'];
+let ouvertureVal = 17;
+let regime = 'R448A'; // 'R448A' (positif) ou 'R452A' (négatif)
+
+const STORAGE_KEY = 'bilan-frigorifique-a2pro';
+
+function fmt(n, d=0) {
+  return n.toLocaleString('fr-FR', {minimumFractionDigits: d, maximumFractionDigits: d});
+}
+
+function calc() {
+  const lg = parseFloat(document.getElementById('lg').value) || 0;
+  const lr = parseFloat(document.getElementById('lr').value) || 0;
+  const ht = parseFloat(document.getElementById('ht').value) || 0;
+  const k = parseFloat(document.getElementById('kval').value) || 0;
+  const text = parseFloat(document.getElementById('text').value) || 0;
+  const tint = parseFloat(document.getElementById('tint').value) || 0;
+
+  const masse = parseFloat(document.getElementById('masse').value) || 0;
+  const cp = parseFloat(document.getElementById('cp').value) || 0;
+  const temps = parseFloat(document.getElementById('temps').value) || 1;
+  const tprod = parseFloat(document.getElementById('tprod').value) || 0;
+
+  const interne = parseFloat(document.getElementById('interne').value) || 0;
+  const marge = parseFloat(document.getElementById('marge').value) || 0;
+  const encrassement = parseFloat(document.getElementById('encrassement').value) || 0;
+
+  const nbPersonnes = parseFloat(document.getElementById('nbPersonnes').value) || 0;
+  const chaleurPersonne = parseFloat(document.getElementById('chaleurPersonne').value) || 0;
+
+  const volume = lg * lr * ht;
+  // surface enveloppe approx: 2 faces LxW (sol+plafond) + 2 faces LxH + 2 faces lxH
+  const surface = 2*(lg*lr) + 2*(lg*ht) + 2*(lr*ht);
+  const dT = Math.max(text - tint, 0);
+
+  const q1 = surface * k * dT; // W
+
+  // Charge produit — positif (sensible seule) ou négatif (sensible avant + latente + sensible après congélation)
+  let q2 = 0;
+  if (regime === 'R452A') {
+    const tcong = parseFloat(document.getElementById('tcong').value) || 0;
+    const lf = parseFloat(document.getElementById('lf').value) || 0;
+    const cpApres = parseFloat(document.getElementById('cpApres').value) || 0;
+
+    const dTavant = Math.max(tprod - tcong, 0);
+    const dTapres = Math.max(tcong - tint, 0);
+    const energieKj = masse * (cp * dTavant + lf + cpApres * dTapres); // kJ
+    q2 = (energieKj * 1000) / (temps * 3600); // W
+  } else {
+    const dTprod = Math.max(tprod - tint, 0);
+    q2 = (masse * cp * dTprod * 1000) / (temps * 3600); // W
+  }
+
+  const q3 = volume * ouvertureVal; // W
+  const q4 = interne; // W
+  const q5 = nbPersonnes * chaleurPersonne; // W — personnel présent
+
+  const chargesContinues = q1 + q3 + q4 + q5; // parois, air, internes, personnel — permanentes sur 24h
+  const subtotal = chargesContinues + q2;
+  const avecMarge = subtotal * (1 + marge/100);
+
+  // Majoration liaison frigorifique (longueur + dénivelé)
+  const longueur = parseFloat(document.getElementById('longueur').value) || 0;
+  const denivele = parseFloat(document.getElementById('denivele').value) || 0;
+  const longueurExcedent = Math.max(longueur - 15, 0);
+  const pctLongueur = longueurExcedent * 1.5; // ~1.5%/m au-delà de 15m
+  const pctDenivele = (denivele / 5.5) * 0.75; // majoration liée au dénivelé, forfait indicatif
+  const pctLiaison = Math.min(pctLongueur + pctDenivele, 25); // plafond indicatif à 25%
+
+  const total = avecMarge * (1 + pctLiaison/100);
+  const totalKw = total / 1000;
+
+  document.getElementById('resultKw').textContent = fmt(totalKw, 2);
+  document.getElementById('resultW').textContent = `soit ${fmt(total)} W · volume utile ${fmt(volume,1)} m³`;
+
+  // Puissance compresseur : la correction temps de fonctionnement/encrassement ne s'applique
+  // qu'aux charges continues (parois/air/internes/personnel) + marge + liaison.
+  // La charge produit (Q2) est déjà une puissance dimensionnée pour un temps choisi (refroidissement/congélation) :
+  // la re-corriger reviendrait à demander au compresseur d'aller "encore plus vite" sur une charge déjà calculée pour aller vite.
+  const tempsFonct = parseFloat(document.getElementById('tempsFonctionnement').value) || 24;
+  const facteurCorrectif = (1 + marge/100) * (1 + pctLiaison/100) * (24 / tempsFonct) * (1 + encrassement/100);
+  const q2CorrigeKw = (q2 * (1 + marge/100) * (1 + pctLiaison/100)) / 1000; // Q2 : marge + liaison seulement, pas de correction runtime/encrassement
+  const chargesContinuesCorrigeesKw = (chargesContinues * facteurCorrectif) / 1000;
+  const puissanceCompresseurKw = q2CorrigeKw + chargesContinuesCorrigeesKw;
+  document.getElementById('resultCompKw').textContent = fmt(puissanceCompresseurKw, 2);
+  if (tempsFonct >= 24 && encrassement === 0) {
+    document.getElementById('resultCompHint').textContent = `Aucune correction appliquée (24h/24h, 0% encrassement) — identique à la puissance frigorifique. C'est cette valeur unique qu'il faut donner à votre fournisseur pour le groupe ET l'évaporateur.`;
+  } else {
+    document.getElementById('resultCompHint').textContent = `Correction temps de fonctionnement (${fmt(tempsFonct,1)}h/24h) et encrassement (+${fmt(encrassement,0)}%) appliquée uniquement aux charges continues (parois/air/internes/personnel = ${fmt(chargesContinues)} W) — la charge produit (${fmt(q2)} W) n'est pas recorrigée car elle est déjà dimensionnée pour son propre temps de refroidissement/congélation. Vérifiez que cette correction reste justifiée avant de la transmettre au fournisseur.`;
+  }
+
+  const liaisonHint = document.getElementById('liaisonHint');
+  if (pctLiaison > 0) {
+    liaisonHint.textContent = `Majoration indicative appliquée : +${fmt(pctLiaison,1)}% sur la puissance groupe (perte de charge estimée). Cette valeur reste une estimation — demande une vérification exacte au fournisseur (Refco/GFF/Bitzer) avec ta longueur, ton dénivelé et le diamètre de ligne envisagé.`;
+  } else {
+    liaisonHint.textContent = `Sous 15m et sans dénivelé important, la perte de charge reste généralement négligeable si le diamètre de ligne est bien choisi.`;
+  }
+
+  const rows = [
+    {label: 'Parois (transmission)', val: q1, color: '#4d7d82'},
+    {label: 'Charge produit', val: q2, color: '#7fd4d9'},
+    {label: 'Air / ouvertures', val: q3, color: '#e0a458'},
+    {label: 'Charges internes', val: q4, color: '#d9705f'},
+    {label: 'Personnel présent', val: q5, color: '#9b8ac4'}
+  ];
+
+  const track = document.getElementById('barTrack');
+  const legend = document.getElementById('legend');
+  track.innerHTML = '';
+  legend.innerHTML = '';
+  rows.forEach(r => {
+    const pct = subtotal > 0 ? (r.val/subtotal*100) : 0;
+    const seg = document.createElement('div');
+    seg.className = 'bar-seg';
+    seg.style.width = pct + '%';
+    seg.style.background = r.color;
+    track.appendChild(seg);
+
+    const leg = document.createElement('span');
+    leg.innerHTML = `<span class="dot" style="background:${r.color}"></span>${r.label} ${fmt(pct,0)}%`;
+    legend.appendChild(leg);
+  });
+
+  const bd = document.getElementById('breakdown');
+  bd.innerHTML = rows.map(r => `<div class="bd-row"><span>${r.label}</span><span class="val">${fmt(r.val)} W</span></div>`).join('')
+    + `<div class="bd-row"><span>Sous-total</span><span class="val">${fmt(subtotal)} W</span></div>`
+    + `<div class="bd-row"><span>+ marge sécurité ${fmt(marge,0)}%</span><span class="val">${fmt(avecMarge)} W</span></div>`
+    + (pctLiaison > 0 ? `<div class="bd-row"><span>+ majoration liaison ${fmt(pctLiaison,1)}%</span><span class="val">${fmt(total)} W</span></div>` : '')
+    + `<div class="bd-row total"><span>Total</span><span class="val">${fmt(total)} W</span></div>`;
+
+  // DT1
+  const dt1 = parseFloat(document.getElementById('sensibilite').value);
+  const tevap = tint - dt1;
+  document.getElementById('dt1out').textContent = `DT1 ≈ ${dt1} K`;
+  document.getElementById('tevapOut').textContent = `→ température d'évaporation cible ≈ ${fmt(tevap,0)}°C pour une chambre à ${fmt(tint,0)}°C`;
+
+  const warnBox = document.getElementById('dt1warn');
+  if (tevap < 0 && tint > 0) {
+    warnBox.style.display = 'block';
+    warnBox.textContent = `Attention : évaporation négative (${fmt(tevap,0)}°C) alors que la chambre est positive → prévoir un dégivrage régulier (givrage progressif de l'évaporateur).`;
+  } else {
+    warnBox.style.display = 'none';
+  }
+
+  // Buse / détendeur — Danfoss T2/TE2
+  // Grille de capacités nominales (kW) — source Danfoss/Le Froid — par Tc (25/35/45°C) et Te (-30/-20/-10/0°C)
+  // Chaque orifice : [capacité à Te=-30, -20, -10, 0]
+  const grilleOrifices = {
+    R448A: {
+      25: { '0X':[0.82,0.85,0.87,0.85], '0':[1.24,1.42,1.57,1.63], '1':[1.9,2.32,2.76,3.12], '2':[2.19,2.76,3.43,4.11], '3':[3.66,4.63,5.79,6.95], '4':[5.33,6.75,8.54,10.6], '5':[6.98,8.84,11.2,13.7], '6':[8.32,10.6,13.5,16.6] },
+      35: { '0X':[0.82,0.87,0.90,0.91], '0':[1.25,1.45,1.63,1.75], '1':[1.91,2.36,2.87,3.34], '2':[2.20,2.81,3.56,4.40], '3':[3.70,4.73,6.03,7.48], '4':[5.43,6.93,8.92,11.4], '5':[7.10,9.09,11.7,14.8], '6':[8.43,10.9,14.1,17.9] },
+      45: { '0X':[0.81,0.87,0.91,0.93], '0':[1.22,1.43,1.63,1.79], '1':[1.86,2.33,2.87,3.41], '2':[2.15,2.77,3.56,4.49], '3':[3.63,4.68,6.05,7.66], '4':[5.37,6.91,8.99,11.6], '5':[7.02,9.06,11.8,15.2], '6':[8.31,10.8,14.2,18.4] }
+    },
+    R452A: {
+      25: { '0X':[0.63,0.68,0.70,0.68], '0':[0.96,1.15,1.29,1.32], '1':[1.45,1.91,2.35,2.60], '2':[1.66,2.29,2.98,3.53], '3':[2.78,3.85,5.04,5.97], '4':[4.01,5.66,7.60,9.27], '5':[5.28,7.45,10.0,12.2], '6':[6.27,8.89,12.0,14.5] },
+      35: { '0X':[0.62,0.68,0.71,0.73], '0':[0.93,1.14,1.33,1.44], '1':[1.40,1.89,2.42,2.83], '2':[1.61,2.27,3.08,3.86], '3':[2.70,3.84,5.24,6.56], '4':[3.94,5.67,7.92,10.2], '5':[5.17,7.46,10.4,13.4], '6':[6.12,8.87,12.5,16.1] },
+      45: { '0X':[0.57,0.64,0.69,0.73], '0':[0.85,1.07,1.28,1.44], '1':[1.29,1.78,2.34,2.85], '2':[1.49,2.14,2.99,3.90], '3':[2.52,3.64,5.11,6.68], '4':[3.70,5.39,7.73,10.4], '5':[4.86,7.09,10.2,13.8], '6':[5.72,8.40,12.2,16.5] }
+    }
+  };
+  const tcValeurs = [25, 35, 45];
+  const teValeurs = [-30, -20, -10, 0];
+
+  function interp1D(x, xs, ys) {
+    // interpolation linéaire, avec clamp aux bornes (extrapolation évitée, on saturera aux limites)
+    if (x <= xs[0]) return ys[0];
+    if (x >= xs[xs.length - 1]) return ys[ys.length - 1];
+    for (let i = 0; i < xs.length - 1; i++) {
+      if (x >= xs[i] && x <= xs[i+1]) {
+        const ratio = (x - xs[i]) / (xs[i+1] - xs[i]);
+        return ys[i] + ratio * (ys[i+1] - ys[i]);
+      }
+    }
+    return ys[ys.length - 1];
+  }
+
+  function capaciteOrifice(fluideKey, code, teReel, tcReel) {
+    // interpolation sur Te pour chaque Tc de la grille, puis interpolation sur Tc
+    const capaAt25 = interp1D(teReel, teValeurs, grilleOrifices[fluideKey][25][code]);
+    const capaAt35 = interp1D(teReel, teValeurs, grilleOrifices[fluideKey][35][code]);
+    const capaAt45 = interp1D(teReel, teValeurs, grilleOrifices[fluideKey][45][code]);
+    return interp1D(tcReel, tcValeurs, [capaAt25, capaAt35, capaAt45]);
+  }
+
+  const dtCondEstime = parseFloat(document.getElementById('dtCondEstime').value) || 15;
+  const tcReel = text + dtCondEstime;
+  const teReel = tevap; // déjà calculé plus haut = tint - dt1
+
+  const codesOrifices = ['0X','0','1','2','3','4','5','6'];
+  const puissanceCible = puissanceCompresseurKw; // kW
+  let orificeChoisi = null;
+  for (const code of codesOrifices) {
+    const capa = capaciteOrifice(regime, code, teReel, tcReel);
+    if (capa >= puissanceCible) { orificeChoisi = { code, kw: capa }; break; }
+  }
+
+  const buseOut = document.getElementById('buseOut');
+  const buseHint = document.getElementById('buseHint');
+  const nomFluide = regime === 'R448A' ? 'R448A' : 'R452A';
+  const horsPlage = teReel < -30 || teReel > 0 || tcReel < 25 || tcReel > 45;
+  const plageNote = horsPlage ? ' ⚠ Te ou Tc en dehors de la plage couverte par la table (Te -30 à 0°C, Tc 25 à 45°C) — valeur extrapolée aux bornes, à vérifier impérativement avec le fournisseur.' : '';
+
+  if (!orificeChoisi) {
+    const dernier = capaciteOrifice(regime, '6', teReel, tcReel);
+    buseOut.textContent = `> orifice 6 (${fmt(dernier,2)} kW à Te=${fmt(teReel,0)}°C/Tc=${fmt(tcReel,0)}°C)`;
+    buseHint.textContent = `Puissance compresseur demandée (${fmt(puissanceCible,2)} kW) au-delà de la gamme standard T2/TE2 en ${nomFluide} à tes conditions réelles — passer à une vanne de calibre supérieur (ex. TEA/TEX) ou une solution multi-détendeurs.${plageNote}`;
+  } else {
+    buseOut.textContent = `Orifice n° ${orificeChoisi.code} (${nomFluide})`;
+    buseHint.textContent = `Capacité interpolée ${fmt(orificeChoisi.kw,2)} kW pour ${fmt(puissanceCible,2)} kW demandés, à ta Te réelle ≈ ${fmt(teReel,0)}°C et Tc estimée ≈ ${fmt(tcReel,0)}°C (Text + ${fmt(dtCondEstime,0)}K). Cette Tc reste une estimation — ajuste l'écart condenseur si tu connais la vraie valeur, et vérifie avec ton fournisseur (Refco/GFF).${plageNote}`;
+  }
+}
+
+function setRegime(val) {
+  regime = val;
+  document.querySelectorAll('#regime-toggle .toggle-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === val);
+  });
+  document.getElementById('congelationBlock').style.display = val === 'R452A' ? 'block' : 'none';
+  document.getElementById('cpLabel').textContent = val === 'R452A' ? 'cp avant congélation' : 'Chaleur spécifique (cp)';
+  document.getElementById('chaleurPersonne').value = val === 'R452A' ? 350 : 270;
+  document.getElementById('temps').value = val === 'R452A' ? 18 : 4;
+  document.getElementById('regimeActifLabel').textContent = `Régime actif : ${val === 'R448A' ? 'Positif — R448A' : 'Négatif — R452A'}`;
+  calc();
+}
+
+document.querySelectorAll('#regime-toggle .toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => setRegime(btn.dataset.val));
+});
+
+document.querySelectorAll('#ouverture-toggle .toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#ouverture-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ouvertureVal = parseFloat(btn.dataset.val);
+    calc();
+  });
+});
+
+ids.forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', calc);
+  el.addEventListener('change', calc);
+});
+
+// --- Sauvegarde / chargement (localStorage) ---
+function getAllValues() {
+  const data = { regime, ouvertureVal };
+  ids.forEach(id => { data[id] = document.getElementById(id).value; });
+  return data;
+}
+
+function applyValues(data) {
+  if (!data) return;
+  ids.forEach(id => {
+    if (data[id] !== undefined) document.getElementById(id).value = data[id];
+  });
+  if (data.ouvertureVal !== undefined) {
+    ouvertureVal = data.ouvertureVal;
+    document.querySelectorAll('#ouverture-toggle .toggle-btn').forEach(b => {
+      b.classList.toggle('active', parseFloat(b.dataset.val) === ouvertureVal);
+    });
+  }
+  if (data.regime) setRegime(data.regime); else calc();
+}
+
+function saveData(showStatus) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(getAllValues()));
+    if (showStatus) {
+      const s = document.getElementById('saveStatus');
+      s.textContent = 'Enregistré ✓';
+      setTimeout(() => { s.textContent = ''; }, 2500);
+    }
+  } catch (e) {
+    console.error('Sauvegarde impossible', e);
+  }
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) applyValues(JSON.parse(raw));
+  } catch (e) {
+    console.error('Chargement impossible', e);
+  }
+}
+
+// --- Historique multi-bilans (par client) ---
+const HISTORY_KEY = 'bilan-frigorifique-historique-a2pro';
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+
+function addToHistory() {
+  const client = document.getElementById('client').value.trim() || '(sans nom)';
+  const entry = {
+    date: new Date().toISOString(),
+    client,
+    regime: regime === 'R448A' ? 'Positif (R448A)' : 'Négatif (R452A)',
+    volume: `${document.getElementById('lg').value}×${document.getElementById('lr').value}×${document.getElementById('ht').value} m`,
+    puissanceFrigo: document.getElementById('resultKw').textContent,
+    puissanceComp: document.getElementById('resultCompKw').textContent,
+    buse: document.getElementById('buseOut').textContent
+  };
+  const history = loadHistory();
+  history.push(entry);
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    const status = document.getElementById('saveStatus');
+    status.textContent = 'Bilan ajouté à l\'historique ✓';
+    setTimeout(() => { status.textContent = ''; }, 2500);
+    renderHistory();
+  } catch (e) { console.error('Historique impossible à sauvegarder', e); }
+}
+
+function renderHistory() {
+  const client = document.getElementById('client').value.trim() || '(sans nom)';
+  const history = loadHistory().filter(h => h.client === client);
+  const box = document.getElementById('historiqueBox');
+  const out = document.getElementById('historiqueOutput');
+
+  if (history.length === 0) {
+    box.style.display = 'none';
+    out.innerHTML = '';
+    return;
+  }
+  box.style.display = 'block';
+
+  const rows = history.slice(-8).map(h => {
+    const dateFmt = new Date(h.date).toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit'});
+    return `<tr>
+      <td>${dateFmt}</td>
+      <td>${h.regime}</td>
+      <td class="current">${h.volume}</td>
+      <td class="current">${h.puissanceFrigo} kW</td>
+      <td class="current">${h.puissanceComp} kW</td>
+      <td class="current">${h.buse}</td>
+    </tr>`;
+  }).join('');
+
+  out.innerHTML = `
+    <table class="hist-table">
+      <thead><tr><th>Date</th><th>Régime</th><th>Dimensions</th><th>P. frigo</th><th>P. comp.</th><th>Buse</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p class="hint hist-clear"><a href="#" id="btnClearHistory" style="color:var(--text-dim);">Effacer l'historique de ce client</a></p>
+  `;
+  const clearLink = document.getElementById('btnClearHistory');
+  if (clearLink) {
+    clearLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('Effacer l\'historique des bilans pour "' + client + '" ?')) {
+        const remaining = loadHistory().filter(h => h.client !== client);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(remaining));
+        renderHistory();
+      }
+    });
+  }
+}
+
+document.getElementById('client').addEventListener('input', renderHistory);
+document.getElementById('btnHistorique').addEventListener('click', addToHistory);
+
+document.getElementById('btnSave').addEventListener('click', () => saveData(true));
+document.getElementById('btnPrint').addEventListener('click', () => window.print());
+document.getElementById('btnReset').addEventListener('click', () => {
+  if (confirm('Réinitialiser toutes les valeurs et effacer la sauvegarde ?')) {
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+});
+
+// Chargement automatique d'une sauvegarde existante au démarrage
+loadData();
+calc();
+renderHistory();
+</script>
+</body>
+</html>
